@@ -6,7 +6,7 @@ def main():
     try:
         print(int(input_var) + 100)
     except ValueError:
-        pass
+        print("숫자가 아닙니다.")
     '''
 
     if input_var.isdigit():
