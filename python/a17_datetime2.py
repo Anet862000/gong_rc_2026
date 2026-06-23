@@ -1,6 +1,9 @@
 import datetime
+from a01_hello import main as hello_main
+
 
 def main():
+    hello_main()
     now = datetime.datetime.now()
 
     if 9 < now.hour < 12:
