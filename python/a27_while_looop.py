@@ -14,7 +14,7 @@ def main():
     except KeyboardInterrupt:
         print("키보드 인터럽트!!")
 
-    list_test = list("choi su gil is python teacher!!")
+    list_test = list("Lee younwoo is python")
     print(list_test)
     while "s" in list_test:
         list_test.remove("s")
