@@ -28,4 +28,4 @@
 - 5교시: list, list 바인딩, 메소드, pyi
 - 6교시: list method(pop, del, remove)
 - 7교시: for문 학습, c언어 스타일 for문과 python스타일 for문 비교, enumerate, zip
-- 8교시: 
+- 8교시: html 메모장 만들기

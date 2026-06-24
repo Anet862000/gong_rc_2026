@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Simple Memo</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            color: #222;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 14px;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #555;
+        }
+
+        .buttons {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 16px;
+            font-size: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #222;
+            color: white;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        .secondary {
+            background: #777;
+        }
+
+        .secondary:hover {
+            background: #555;
+        }
+
+        #status {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>메모장</h1>
+
+        <textarea id="memo" placeholder="메모를 입력하세요..."></textarea>
+
+        <div class="buttons">
+            <button onclick="saveMemo()">저장</button>
+            <button class="secondary" onclick="loadMemo()">불러오기</button>
+            <button class="secondary" onclick="clearMemo()">비우기</button>
+        </div>
+
+        <div id="status">준비됨</div>
+    </div>
+
+    <script>
+        const memo = document.getElementById("memo");
+        const statusText = document.getElementById("status");
+
+        function setStatus(message) {
+            statusText.textContent = message;
+        }
+
+        async function saveMemo() {
+            try {
+                const text = memo.value;
+                const result = await window.pywebview.api.save_memo(text);
+
+                setStatus("저장 완료: " + result.path);
+            } catch (error) {
+                setStatus("저장 실패: " + error);
+            }
+        }
+
+        async function loadMemo() {
+            try {
+                const result = await window.pywebview.api.load_note();
+
+                memo.value = result.text;
+                setStatus("불러오기 완료");
+            } catch (error) {
+                setStatus("불러오기 실패: " + error);
+            }
+        }
+
+        function clearMemo() {
+            memo.value = "";
+            setStatus("내용을 비웠습니다");
+        }
+
+        window.addEventListener("pywebviewready", () => {
+            loadMemo();
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.ctrlKey && event.key === "s") {
+                event.preventDefault();
+                saveMemo();
+            }
+        });
+    </script>
+</body>
+</html>
