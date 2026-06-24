@@ -34,4 +34,5 @@
 
 - 1교시: while loop
 - 2교시: 사전 평가 시험
-- 3교시: 
+- 3교시: 함수 작성, type hint, doc string, return
+- 4교시: 
