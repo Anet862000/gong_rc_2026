@@ -30,6 +30,7 @@ class AutocarStatus:
     latitude: float = 37.5665
     longitude: float = 126.9780
     lidar: str = "OK"
+    lidar_scan: list[dict[str, float]] = field(default_factory=list)
     camera: str = "OK"
     route_name: str = "Test Track A"
     route_progress_percent: int = 18
@@ -45,7 +46,9 @@ class AutocarApiServer:
     def __init__(self, frontend_dir: Path) -> None:
         self.frontend_dir = Path(frontend_dir).resolve()
         self.port = AUTOCAR_PORT
+        self._tick = 0
         self._status = AutocarStatus()
+        self._status.lidar_scan = self._build_lidar_scan()
         self._lock = Lock()
         self._event_clients: list[StatusEventQueue] = []
         self._server: BaseWSGIServer | None = None
@@ -53,7 +56,6 @@ class AutocarApiServer:
         self._sim_thread: Thread | None = None
         self._stop_event = Event()
         self._owns_server = False
-        self._tick = 0
 
         self.app = Flask(__name__, static_folder=str(self.frontend_dir), static_url_path="")
         self.app.add_url_rule("/", "index", self._serve_index)
@@ -195,5 +197,28 @@ class AutocarApiServer:
                     if "Camera exposure warning" not in self._status.faults:
                         self._status.faults.append("Camera exposure warning")
 
+                self._status.lidar_scan = self._build_lidar_scan()
                 self._status.updated_at = time.time()
             self._broadcast_status()
+
+    def _build_lidar_scan(self) -> list[dict[str, float]]:
+        scan = []
+        for angle in range(-90, 91, 3):
+            radians = math.radians(angle)
+            corridor = 8.0 + 1.4 * math.cos(radians * 2)
+            ripple = 0.35 * math.sin(self._tick / 4 + radians * 5)
+            distance = corridor + ripple + random.uniform(-0.18, 0.18)
+
+            if -18 <= angle <= 12:
+                obstacle_center = 4.2 + 0.35 * math.sin(self._tick / 5)
+                distance = min(distance, obstacle_center + abs(angle + 4) * 0.035)
+            if 45 <= angle <= 66:
+                distance = min(distance, 5.8 + random.uniform(-0.2, 0.25))
+
+            scan.append(
+                {
+                    "angle": float(angle),
+                    "distance": round(max(0.4, min(distance, 12.0)), 2),
+                }
+            )
+        return scan

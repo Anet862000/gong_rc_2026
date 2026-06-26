@@ -46,6 +46,7 @@ button.danger {
 .topbar,
 .status-strip,
 .dashboard,
+.lidar-panel,
 .details {
     display: grid;
     gap: 16px;
@@ -89,6 +90,7 @@ h2 {
 .pill,
 .metric,
 .hero-panel,
+.lidar-panel,
 .details article {
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
@@ -179,6 +181,31 @@ h2 {
     font-size: 28px;
 }
 
+.lidar-panel {
+    margin-top: 16px;
+    padding: 18px;
+}
+
+.section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.section-head strong {
+    color: #8bd6ff;
+    font-size: 14px;
+}
+
+#lidarCanvas {
+    width: 100%;
+    aspect-ratio: 820 / 360;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    background: #10161b;
+}
+
 .details {
     grid-template-columns: 1fr 1.2fr 1fr;
     margin-top: 16px;
@@ -217,6 +244,11 @@ h2 {
 
     .actions {
         justify-content: flex-start;
+    }
+
+    .section-head {
+        align-items: start;
+        flex-direction: column;
     }
 
     .hero-panel {
