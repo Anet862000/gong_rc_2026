@@ -1,5 +1,5 @@
 import json
-
+from pathlib import Path
 def main():
     dict_a = dict()
     dict_a = {'a' : 'aa'}
@@ -27,7 +27,7 @@ def main():
     print(dict_a.keys())
     print(dict_a.values())
 
-    with open("data/dict_a.json", "w", encoding='utf-8') as f:
+    with open(Path(__file__).parent.parent / "data/dict_a.json", "w", encoding='utf-8') as f:
         json.dump(dict_a, f, ensure_ascii=False, indent=4)
 
 if __name__ == '__main__':
