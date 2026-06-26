@@ -25,6 +25,7 @@ class AutocarStatus:
     steering_deg: float = 0.0
     throttle_percent: int = 0
     brake_percent: int = 0
+    remote_command: str = "stop"
     gps_fix: str = "3D"
     gps_satellites: int = 14
     latitude: float = 37.5665
@@ -67,6 +68,12 @@ class AutocarApiServer:
             self._handle_command,
             methods=["POST"],
         )
+        self.app.add_url_rule(
+            "/api/remote/<direction>",
+            "remote",
+            self._handle_remote,
+            methods=["POST"],
+        )
 
     def _serve_index(self):
         return send_from_directory(self.frontend_dir, "index.html")
@@ -91,11 +98,13 @@ class AutocarApiServer:
         with self._lock:
             if command_name == "toggle-autonomy":
                 self._status.autonomous = not self._status.autonomous
+                self._status.remote_command = "stop"
                 if self._status.autonomous:
                     self._status.emergency_stop = False
             elif command_name == "emergency-stop":
                 self._status.emergency_stop = True
                 self._status.autonomous = False
+                self._status.remote_command = "stop"
                 self._status.target_speed_kph = 0.0
                 self._status.speed_kph = 0.0
                 self._status.throttle_percent = 0
@@ -106,6 +115,48 @@ class AutocarApiServer:
                 self._status.camera = "OK"
             else:
                 return jsonify({"error": f"Unknown command: {command_name}"}), 404
+            self._status.updated_at = time.time()
+
+        self._broadcast_status()
+        return jsonify(self._snapshot())
+
+    def _handle_remote(self, direction: str):
+        commands = {"forward", "backward", "left", "right", "stop"}
+        if direction not in commands:
+            return jsonify({"error": f"Unknown remote command: {direction}"}), 404
+
+        with self._lock:
+            self._status.autonomous = False
+            self._status.emergency_stop = False
+            self._status.remote_command = direction
+
+            if direction == "forward":
+                self._status.target_speed_kph = 12.0
+                self._status.throttle_percent = 45
+                self._status.brake_percent = 0
+                self._status.steering_deg = 0.0
+            elif direction == "backward":
+                self._status.target_speed_kph = -6.0
+                self._status.throttle_percent = 22
+                self._status.brake_percent = 0
+                self._status.steering_deg = 0.0
+            elif direction == "left":
+                self._status.target_speed_kph = 5.0
+                self._status.throttle_percent = 18
+                self._status.brake_percent = 0
+                self._status.steering_deg = -24.0
+            elif direction == "right":
+                self._status.target_speed_kph = 5.0
+                self._status.throttle_percent = 18
+                self._status.brake_percent = 0
+                self._status.steering_deg = 24.0
+            else:
+                self._status.target_speed_kph = 0.0
+                self._status.speed_kph = 0.0
+                self._status.throttle_percent = 0
+                self._status.brake_percent = 100
+                self._status.steering_deg = 0.0
+
             self._status.updated_at = time.time()
 
         self._broadcast_status()
@@ -172,11 +223,14 @@ class AutocarApiServer:
                 self._tick += 1
                 phase = self._tick / 6
                 target = self._status.target_speed_kph if self._status.autonomous else 0.0
+                if self._status.remote_command != "stop":
+                    target = self._status.target_speed_kph
                 if self._status.emergency_stop:
                     target = 0.0
 
                 self._status.speed_kph += (target - self._status.speed_kph) * 0.24
-                self._status.steering_deg = round(math.sin(phase) * 9.5, 1)
+                if self._status.remote_command == "stop":
+                    self._status.steering_deg = round(math.sin(phase) * 9.5, 1)
                 self._status.throttle_percent = int(max(0, min(100, self._status.speed_kph * 2.2)))
                 self._status.brake_percent = 100 if self._status.emergency_stop else int(
                     max(0, 40 - self._status.speed_kph)

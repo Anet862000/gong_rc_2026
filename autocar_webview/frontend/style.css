@@ -186,6 +186,50 @@ h2 {
     margin-top: 16px;
 }
 
+.remote-panel {
+    grid-column: 1 / -1;
+}
+
+.remote-pad {
+    width: min(420px, 100%);
+    margin: 8px auto 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.remote-button {
+    min-height: 58px;
+    font-size: 15px;
+}
+
+.remote-button.forward {
+    grid-column: 2;
+}
+
+.remote-button.left {
+    grid-column: 1;
+}
+
+.remote-button.stop {
+    grid-column: 2;
+    background: #9d332d;
+    border-color: #e0665d;
+}
+
+.remote-button.right {
+    grid-column: 3;
+}
+
+.remote-button.backward {
+    grid-column: 2;
+}
+
+.remote-button.active {
+    outline: 2px solid #8bd6ff;
+    background: #315264;
+}
+
 .sensor-panel {
     margin-top: 16px;
     padding: 18px;

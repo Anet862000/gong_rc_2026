@@ -15,6 +15,8 @@ const elements = {
     modePill: document.getElementById('modePill'),
     position: document.getElementById('position'),
     resetFaults: document.getElementById('resetFaults'),
+    remoteButtons: document.querySelectorAll('[data-remote]'),
+    remoteSummary: document.getElementById('remoteSummary'),
     routeLabel: document.getElementById('routeLabel'),
     routeProgress: document.getElementById('routeProgress'),
     speedValue: document.getElementById('speedValue'),
@@ -197,6 +199,10 @@ function renderStatus(status) {
     elements.routeProgress.style.width = `${status.route_progress_percent}%`;
     elements.updatedAt.textContent = status.updated_at_iso;
     elements.toggleAutonomy.textContent = status.autonomous ? 'Manual Mode' : 'Autonomy';
+    elements.remoteSummary.textContent = status.remote_command || 'stop';
+    elements.remoteButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.remote === status.remote_command);
+    });
 
     drawCamera(status);
     drawLidar(status.lidar_scan || []);
@@ -217,9 +223,18 @@ function command(name) {
     });
 }
 
+function remoteCommand(direction) {
+    requestStatus(`/api/remote/${direction}`, { method: 'POST' }).catch(() => {
+        setPill(elements.connectionPill, 'Remote Failed', 'bad');
+    });
+}
+
 elements.toggleAutonomy.addEventListener('click', () => command('toggle-autonomy'));
 elements.emergencyStop.addEventListener('click', () => command('emergency-stop'));
 elements.resetFaults.addEventListener('click', () => command('reset-faults'));
+elements.remoteButtons.forEach((button) => {
+    button.addEventListener('click', () => remoteCommand(button.dataset.remote));
+});
 
 const statusEvents = new EventSource('/api/status/events');
 
@@ -263,4 +278,28 @@ elements.lidarCanvas.addEventListener('pointercancel', () => {
 window.addEventListener('resize', () => {
     drawCamera({ camera: elements.camera.textContent || 'OK' });
     drawLidar();
+});
+
+window.addEventListener('keydown', (event) => {
+    const keyMap = {
+        ArrowUp: 'forward',
+        w: 'forward',
+        W: 'forward',
+        ArrowDown: 'backward',
+        s: 'backward',
+        S: 'backward',
+        ArrowLeft: 'left',
+        a: 'left',
+        A: 'left',
+        ArrowRight: 'right',
+        d: 'right',
+        D: 'right',
+        ' ': 'stop',
+    };
+    const direction = keyMap[event.key];
+    if (!direction || event.repeat) {
+        return;
+    }
+    event.preventDefault();
+    remoteCommand(direction);
 });
